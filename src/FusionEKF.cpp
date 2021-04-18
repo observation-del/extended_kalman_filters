@@ -104,9 +104,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       // pre-compute a set of terms to avoid repeated calculation
 
       float c1 = ekf_.x_(0)*ekf_.x_(0) + ekf_.x_(1)*ekf_.x_(1);
-      float c2 = sqrt(c1);
-      float c3 = (c1*c2);
-
+      
       // check division by zero
       if (fabs(c1) < 0.0001) {
         cout << "CalculateJacobian () - Error - Division by Zero" << endl;
@@ -115,10 +113,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
       else{
         // compute the Jacobian matrix
-        Hj_ << (ekf_.x_(0)/c2), (ekf_.x_(1)/c2), 0, 0,
-            -(ekf_.x_(1)/c1), (ekf_.x_(0)/c1), 0, 0,
-            ekf_.x_(1)*(ekf_.x_(2)*ekf_.x_(1) - ekf_.x_(3)*ekf_.x_(0))/c3, ekf_.x_(0)*(ekf_.x_(3)*ekf_.x_(0) - ekf_.x_(2)*ekf_.x_(1))/c3, ekf_.x_(0)/c2, ekf_.x_(1)/c2;
-        
+        Hj_ = tools.CalculateJacobian(ekf_.x_); 
+
         Eigen::VectorXd y_radar;
         y_radar = VectorXd(3);
         y_radar = measurement_pack.raw_measurements_ - Hj_*ekf_.x_;
@@ -212,13 +208,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
 
     float c1 = ekf_.x_(0)*ekf_.x_(0) + ekf_.x_(1)*ekf_.x_(1);
-    float c2 = sqrt(c1);
-    float c3 = (c1*c2);
 
-    Hj_ << (ekf_.x_(0)/c2), (ekf_.x_(1)/c2), 0, 0,
-            -(ekf_.x_(1)/c1), (ekf_.x_(0)/c1), 0, 0,
-            ekf_.x_(1)*(ekf_.x_(2)*ekf_.x_(1) - ekf_.x_(3)*ekf_.x_(0))/c3, ekf_.x_(0)*(ekf_.x_(3)*ekf_.x_(0) - ekf_.x_(2)*ekf_.x_(1))/c3, ekf_.x_(0)/c2, ekf_.x_(1)/c2;
-    
+    // check division by zero
+    if (fabs(c1) < 0.0001) {
+      cout << "CalculateJacobian () - Error - Division by Zero" << endl;
+      return;
+    }
+
+    // compute the Jacobian matrix
+    Hj_ = tools.CalculateJacobian(ekf_.x_); 
+
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
 
