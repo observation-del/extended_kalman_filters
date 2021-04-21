@@ -26,8 +26,8 @@ void KalmanFilter::Predict() {
   /**
    * TODO: predict the state
    */
-  x_ = F_*x_;
-  P_ = F_ * P_ * F_.transpose();
+  x_ = F_ * x_;
+  P_ = F_ * P_ * F_.transpose() + Q_;
 
 }
 

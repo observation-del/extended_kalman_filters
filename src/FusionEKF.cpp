@@ -73,7 +73,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   /**
    * Initialization
    */
-  printf("FusionEKF.cpp line: %d\n", __LINE__);
   if (!is_initialized_) {
     /**
      * TODO: Initialize the state ekf_.x_ with the first measurement.
@@ -100,8 +99,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       0,0,1,0,
       0,0,0,1;
 
-    printf("FusionEKF.cpp line: %d\n", __LINE__);
-
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
       //         and initialize state.
@@ -116,7 +113,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       }
 
       else{
-        printf("FusionEKF.cpp line: %d\n", __LINE__);
         // compute the Jacobian matrix
         Hj_ = tools.CalculateJacobian(ekf_.x_); 
 
@@ -137,28 +133,21 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         ekf_.P_ = (I - K_radar*Hj_)*ekf_.P_;
 
       }
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
     }
 
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
       // TODO: Initialize state.
       Eigen::VectorXd y_laser;
       y_laser = VectorXd(4);
       y_laser = measurement_pack.raw_measurements_ - H_laser_*ekf_.x_;
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
       Eigen::MatrixXd S_laser;
       S_laser = MatrixXd(4, 4);
       S_laser = H_laser_ * ekf_.P_ * H_laser_.transpose() + R_laser_;
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
       Eigen::MatrixXd K_laser;
       K_laser = MatrixXd(4,4);
       K_laser = ekf_.P_ * H_laser_.transpose() * S_laser.inverse();
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
       ekf_.x_ = ekf_.x_ + K_laser*y_laser;
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
       ekf_.P_ = (I - K_laser*H_laser_)*ekf_.P_;
-      printf("FusionEKF.cpp line: %d\n", __LINE__);
     }
 
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -188,8 +177,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   long long noise_ax2 = noise_ax*noise_ax;
   long long noise_ay2 = noise_ay*noise_ay;
 
-  ekf_.F_ << 1, 0, measurement_pack.timestamp_ - previous_timestamp_, 0,
-        0, 1, 0, measurement_pack.timestamp_ - previous_timestamp_,
+  ekf_.F_ << 1, 0, dt, 0,
+        0, 1, 0, dt,
         0, 0, 1, 0,
         0, 0, 0, 1;
 
@@ -200,6 +189,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0, dt3*noise_ay2/2, 0, dt2*noise_ay2;
 
   ekf_.Predict();
+  previous_timestamp_ = measurement_pack.timestamp_;
 
   /**
    * Update
