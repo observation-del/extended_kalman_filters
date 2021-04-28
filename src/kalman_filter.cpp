@@ -36,11 +36,7 @@ void KalmanFilter::Update(const VectorXd &z) {
    * TODO: update the state by using Kalman Filter equations
    */
   static Eigen::MatrixXd I;
-  I = MatrixXd(4,4);
-  I << 1,0,0,0,
-    0,1,0,0,
-    0,0,1,0,
-    0,0,0,1;
+  I = MatrixXd::Identity(4,4);
 
   Eigen::VectorXd y_laser;
   y_laser = VectorXd(4);
@@ -66,16 +62,30 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
    * TODO: update the state by using Extended Kalman Filter equations
    */
 
-  static Eigen::MatrixXd I;
-  I = MatrixXd(4,4);
-  I << 1,0,0,0,
-    0,1,0,0,
-    0,0,1,0,
-    0,0,0,1;
+  Eigen::VectorXd hx(3);
+  VectorXd pre_x;
+  pre_x = x_;
+  float pre_px = pre_x(0);
+  float pre_py = pre_x(1);
+  float pre_vx = pre_x(2);
+  float pre_vy = pre_x(3);
+  
+  hx << sqrt(pre_px*pre_px+pre_py*pre_py), atan2(pre_py,pre_px), (pre_px*pre_vx + pre_py*pre_vy)/sqrt(pre_px*pre_px+pre_py*pre_py);
+
+  Eigen::MatrixXd I;
+  I = MatrixXd::Identity(4,4);
 
   Eigen::VectorXd y_radar;
   y_radar = VectorXd(3);
-  y_radar = z - H_*x_;
+  y_radar = z - hx;
+
+  while(y_radar(1) > M_PI){
+    y_radar(1) -= 2.0*M_PI;
+  }
+  
+  while(y_radar(1) < -M_PI){
+    y_radar(1) += 2.0*M_PI;
+  }
 
   Eigen::MatrixXd S_radar;
   S_radar = MatrixXd(3, 3);
@@ -86,7 +96,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   K_radar = P_ * H_.transpose() * S_radar.inverse();
 
   x_ = x_ + K_radar*y_radar;
-  
   P_ = (I - K_radar*H_)*P_;
 
 }
