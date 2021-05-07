@@ -91,8 +91,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.x_ = VectorXd(4);
     ekf_.x_ << 1, 1, 1, 1;
 
-    printf("FusionEKF : %d\n",__LINE__);
-
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
       //         and initialize state.
@@ -146,9 +144,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0.0, dt4*noise_ay2/4.0, 0.0, dt3*noise_ay2/2.0,
             dt3*noise_ax2/2.0, 0.0, dt2*noise_ax2, 0.0,
             0.0, dt3*noise_ay2/2.0, 0.0, dt2*noise_ay2;
-  printf("FusionEKF : %d\n",__LINE__);
   ekf_.Predict();
-  printf("FusionEKF : %d\n",__LINE__);
   previous_timestamp_ = measurement_pack.timestamp_;
 
   /**
@@ -177,17 +173,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
-    printf("FusionEKF : %d\n",__LINE__);
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-    printf("FusionEKF : %d\n",__LINE__);
 
   } else {
     // TODO: Laser updates
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
-    printf("FusionEKF : %d\n",__LINE__);
     ekf_.Update(measurement_pack.raw_measurements_);
-    printf("FusionEKF : %d\n",__LINE__);
   }
 
   // print the output
